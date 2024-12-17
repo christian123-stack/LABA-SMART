@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hitung Keuntungan Penjualan Per Bulan</title>
+    <!-- Menambahkan jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Menambahkan jsPDF autoTable -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <link rel="icon" href="Preview (2).png" type="image/x-icon">
+
+    <style>
+        /* Global Style */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 80%;
+            max-width: 800px;
+            padding: 30px;
+            background-color: #fff;
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 0px 12px black;
+        }
+
+        h1, h2 {
+            color: #4CAF50;
+            text-align: center;
+        }
+
+        label {
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+            display: inline-block;
+            width: 150px;
+        }
+
+        input[type="number"], input[type="text"] {
+            width: calc(100% - 160px);
+            padding: 10px;
+            font-size: 1rem;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        input[type="number"]:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .barang-item {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .barang-item div {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .barang-item div label {
+            flex-shrink: 0;
+        }
+
+        .barang-item div input {
+            flex-grow: 1;
+        }
+
+        #result {
+            text-align: center;
+            font-size: 1.5rem;
+            margin-top: 20px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .laporan {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .laporan table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .laporan table, .laporan th, .laporan td {
+            border: 1px solid #ddd;
+        }
+
+        .laporan th, .laporan td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        .total-keuntungan {
+            font-weight: bold;
+            background-color: #f4f4f4;
+        }
+
+        .total-pendapatan {
+            font-weight: bold;
+            text-align: center;
+        }
+        .info-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        margin-bottom:490px;
+        }
+
+        .info-button:hover {
+            background-color: #45a049;
+        }
+
+        .info-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .info-modal-content {
+            background-color: #333;
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .close-info-modal {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+        }
+
+
+    </style>
+</head>
+<body>
+   
+    <div class="container">
+        <img src="Preview (2).png" alt="Preview">
+        <h1>Hitung Keuntungan Penjualan Per Bulan</h1>
+
+        <label for="hargaSewa">Harga Sewa Toko Per Bulan:</label>
+        <input type="number" id="hargaSewa" required>
+
+        <label for="hargaDistribusi">Biaya Distribusi Per Bulan:</label>
+        <input type="number" id="hargaDistribusi" required>
+
+        <label for="biayaListrik">Biaya Listrik perbulan:</label>
+        <input type="number" id="biayaListrik" required>
+
+        <label for="biayaModal">Biaya Modal Total per bulan:</label>
+        <input type="number" id="biayaModal" required>
+
+        <h2>Masukkan Detail Barang</h2>
+
+        <div id="barangInputs"></div>
+
+        <button onclick="tambahBarang()">Tambah Barang</button>
+        <button onclick="hitungKeuntungan()">Hitung Keuntungan</button>
+
+        <div id="result"></div>
+
+        <!-- Laporan Keuntungan -->
+        <div class="laporan" id="laporanKeuntungan">
+            <h2>Laporan Keuntungan</h2>
+            <table id="laporanTable">
+                <thead>
+                    <tr>
+                        <th>Nama Barang</th>
+                        <th>Harga Jual</th>
+                        <th>Jumlah Terjual</th>
+                        <th>Total Pendapatan Setiap Barang</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+
+            <table id="totalKeuntunganTable" style="margin-top: 20px;">
+                <thead>
+                    <tr>
+                        <th>Total Keuntungan</th>
+                        <th>Rp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="total-keuntungan">
+                        <td colspan="2" id="totalKeuntungan"></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Total Pendapatan Keseluruhan:</h3>
+            <table id="totalPendapatanTable" style="margin-top: 20px;">
+                <thead>
+                    <tr>
+                        <th>Total Pendapatan</th>
+                        <th>Rp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Total Pendapatan Keseluruhan -->
+                </tbody>
+            </table>
+            <button onclick="cetakLaporan()">Cetak Laporan</button>
+            <button onclick="unduhPDF()">Unduh PDF</button>
+        </div>
+    </div>
+    <!-- Tombol Informasi -->
+    <button class="info-button" onclick="tampilkanInformasi()">?</button>
+
+    <!-- Modal Informasi -->
+    <div class="info-modal" id="infoModal">
+        <div class="info-modal-content">
+            <span class="close-info-modal" onclick="tutupInformasi()">&times;</span>
+            <h2>Informasi Website</h2>
+            <p>Website ini memungkinkan Anda untuk menghitung keuntungan bulanan dari bisnis Anda berdasarkan harga jual barang, biaya tetap, dan biaya modal.</p>
+            <p>Masukkan detail barang yang Anda jual, serta biaya tetap yang dikeluarkan, dan hitung keuntungan Anda dengan mudah!</p>
+        <h2> petunjuk penggunaan:</h2>
+        <li> pengguna terlebih dahulu memasukkan : <i>Harga Sewa Toko Per Bulan, Biaya Distribusi Per Bulan,Biaya Listrik perbulan, dan Biaya Modal Total per bulan </i>  </li>
+    <li> kemudian pengguna memasukkan detail barang, mulai dari nama barang, harga jual barang, dan jumlah barang terjual.</li>    
+<li> jika pengguna ingin menambahkan barang lagi maka pengguna tinggal meng-klik tombol tambah barang </li> 
+<li> untuk menghitung keuntungan pengguna meng-klik tombol hitung keuntungan dan setelah itu pengguna dapat mencetak laporannya dan mengunduhnya melalui dalam format</li>   
+</div>
+
+
+    </div>
+
+    <script>
+        function tampilkanInformasi() {
+            document.getElementById("infoModal").style.display = "flex";
+        }
+
+        function tutupInformasi() {
+            document.getElementById("infoModal").style.display = "none";
+        }
+       // Data barang yang sudah disiapkan (bisa disesuaikan dengan kebutuhan)
+        const daftarBarang = {
+            "Barang A": { harga: 50000, jumlah: 10 },
+            "Barang B": { harga: 75000, jumlah: 5 },
+            "Barang C": { harga: 120000, jumlah: 8 }
+        };
+
+        let barangCount = 0;
+
+        function tambahBarang() {
+            barangCount++;
+
+            const barangInputs = document.getElementById("barangInputs");
+            const barangDiv = document.createElement("div");
+            barangDiv.classList.add("barang-item");
+
+            // Input untuk nama barang
+            const namaBarangDiv = document.createElement("div");
+            const namaBarangLabel = document.createElement("label");
+            namaBarangLabel.textContent = `Nama Barang ${barangCount}:`;
+            const namaBarangInput = document.createElement("input");
+            namaBarangInput.type = "text";
+            namaBarangInput.id = `namaBarang${barangCount}`;
+            namaBarangInput.placeholder = "Masukkan Nama Barang";
+            namaBarangInput.addEventListener("input", function() {
+                updateHargaDanJumlah(barangCount);
+            });
+            namaBarangDiv.appendChild(namaBarangLabel);
+            namaBarangDiv.appendChild(namaBarangInput);
+
+            // Input untuk harga jual barang
+            const hargaJualDiv = document.createElement("div");
+            const hargaJualLabel = document.createElement("label");
+            hargaJualLabel.textContent = `Harga Jual Barang ${barangCount}:`;
+            const hargaJualInput = document.createElement("input");
+            hargaJualInput.type = "number";
+            hargaJualInput.id = `hargaJual${barangCount}`;
+            hargaJualInput.placeholder = "Harga Jual Barang";
+            hargaJualDiv.appendChild(hargaJualLabel);
+            hargaJualDiv.appendChild(hargaJualInput);
+
+            // Input untuk jumlah barang terjual
+            const jumlahBarangDiv = document.createElement("div");
+            const jumlahBarangLabel = document.createElement("label");
+            jumlahBarangLabel.textContent = `Jumlah Barang ${barangCount} Terjual:`;
+            const jumlahBarangInput = document.createElement("input");
+            jumlahBarangInput.type = "number";
+            jumlahBarangInput.id = `jumlahBarang${barangCount}`;
+            jumlahBarangInput.placeholder = "Jumlah Terjual Barang";
+            jumlahBarangDiv.appendChild(jumlahBarangLabel);
+            jumlahBarangDiv.appendChild(jumlahBarangInput);
+
+            barangDiv.appendChild(namaBarangDiv);
+            barangDiv.appendChild(hargaJualDiv);
+            barangDiv.appendChild(jumlahBarangDiv);
+
+            barangInputs.appendChild(barangDiv);
+        }
+
+        // Fungsi untuk mengupdate harga dan jumlah berdasarkan nama barang
+        function updateHargaDanJumlah(barangIndex) {
+            const namaBarangInput = document.getElementById(`namaBarang${barangIndex}`);
+            const hargaJualInput = document.getElementById(`hargaJual${barangIndex}`);
+            const jumlahBarangInput = document.getElementById(`jumlahBarang${barangIndex}`);
+
+            const namaBarang = namaBarangInput.value.trim();
+
+            if (namaBarang && daftarBarang[namaBarang]) {
+                hargaJualInput.value = daftarBarang[namaBarang].harga;
+                jumlahBarangInput.value = daftarBarang[namaBarang].jumlah;
+            } else {
+                hargaJualInput.value = '';
+                jumlahBarangInput.value = '';
+            }
+        }
+
+        function hitungKeuntungan() {
+            const hargaSewa = parseFloat(document.getElementById("hargaSewa").value);
+            const hargaDistribusi = parseFloat(document.getElementById("hargaDistribusi").value);
+            const biayaListrik = parseFloat(document.getElementById("biayaListrik").value);
+            const biayaModal = parseFloat(document.getElementById("biayaModal").value);
+
+            let totalPendapatanKeseluruhan = 0;
+            let totalKeuntungan = 0;
+            const laporanTableBody = document.querySelector("#laporanTable tbody");
+            const totalPendapatanTableBody = document.querySelector("#totalPendapatanTable tbody");
+
+            laporanTableBody.innerHTML = "";
+            totalPendapatanTableBody.innerHTML = "";
+
+            for (let i = 1; i <= barangCount; i++) {
+                const namaBarang = document.getElementById(`namaBarang${i}`).value;
+                const hargaJual = parseFloat(document.getElementById(`hargaJual${i}`).value);
+                const jumlahBarang = parseInt(document.getElementById(`jumlahBarang${i}`).value);
+
+                const totalPendapatanBarang = hargaJual * jumlahBarang;
+                totalPendapatanKeseluruhan += totalPendapatanBarang;
+
+                // Menambahkan baris ke laporan table
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${namaBarang}</td>
+                    <td>Rp ${hargaJual.toLocaleString()}</td>
+                    <td>${jumlahBarang}</td>
+                    <td>Rp ${totalPendapatanBarang.toLocaleString()}</td>
+                `;
+                laporanTableBody.appendChild(row);
+            }
+
+            totalKeuntungan = totalPendapatanKeseluruhan - (hargaSewa + hargaDistribusi + biayaListrik + biayaModal);
+            document.getElementById("totalKeuntungan").textContent = `Rp ${totalKeuntungan.toLocaleString()}`;
+
+            // Menambahkan total pendapatan keseluruhan ke tabel
+            const totalPendapatanRow = document.createElement("tr");
+            totalPendapatanRow.innerHTML = `
+                <td>Total Pendapatan Keseluruhan</td>
+                <td>Rp ${totalPendapatanKeseluruhan.toLocaleString()}</td>
+            `;
+            totalPendapatanTableBody.appendChild(totalPendapatanRow);
+
+            document.getElementById("laporanKeuntungan").style.display = "block";
+        }
+
+        function cetakLaporan() {
+            window.print();
+        }
+
+        function unduhPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Menambahkan Judul Laporan
+            doc.text("Laporan Keuntungan Penjualan", 20, 10);
+
+            // Menambahkan Tabel Laporan Keuntungan
+            const laporanTable = document.getElementById("laporanTable");
+
+            doc.autoTable({
+                html: laporanTable,  // Mengambil tabel HTML
+                startY: 20,  // Mengatur posisi tabel pada PDF
+                columnStyles: {
+                    1: { halign: 'right' }, // Kolom harga jual di-right align
+                    3: { halign: 'right' }  // Kolom total pendapatan di-right align
+                }
+            });
+
+            // Menambahkan Total Keuntungan
+            const totalKeuntungan = document.getElementById("totalKeuntungan").textContent;
+            doc.text(`Total Keuntungan: ${totalKeuntungan.replace(",", ".")}`, 20, doc.lastAutoTable.finalY + 10);
+
+            // Menambahkan Total Pendapatan Keseluruhan
+            const totalPendapatanTable = document.getElementById("totalPendapatanTable");
+
+            // Menambahkan tabel total pendapatan keseluruhan ke PDF
+            doc.autoTable({
+                html: totalPendapatanTable,
+                startY: doc.lastAutoTable.finalY + 10,  // Posisi tabel di bawah tabel sebelumnya
+                columnStyles: {
+                    1: { halign: 'right' }, // Kolom total pendapatan di-right align
+                }
+            });
+
+            // Menyimpan file PDF
+            doc.save("laporan_keuntungan.pdf");
+        }
+    </script>
+</body>
+</html>
